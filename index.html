@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tower Defense</title>
+<style>
+body { font-family: Arial; }
+canvas { border:1px solid black; background:#f8f8f8; }
+#ui { margin-top:10px; }
+button { margin-right:5px; padding:8px; }
+.selected { background:#4CAF50; color:white; }
+</style>
+</head>
+<body>
+
+<h2>Tower Defense</h2>
+
+<canvas id="gameCanvas" width="900" height="500"></canvas>
+
+<div id="ui">
+    <p>
+        Health: <span id="health">100</span> |
+        Money: <span id="money">150</span> |
+        Kills: <span id="kills">0</span> |
+        Wave: <span id="wave">1</span>
+    </p>
+
+    <button id="startWaveBtn">Start Wave</button>
+    <button id="restartBtn">Restart</button>
+    <label>
+        <input type="checkbox" id="autoWave">
+        Auto Wave
+    </label>
+
+    <br><br>
+
+    <b>Select Tower:</b>
+    <button class="towerBtn selected" data-type="cannon">Cannon ($30)</button>
+    <button class="towerBtn" data-type="sniper">Sniper ($50)</button>
+    <button class="towerBtn" data-type="rapid">Rapid ($40)</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const GRID_SIZE = 50;
+const PATH_Y = 225;
+const PATH_HEIGHT = 50;
+
+let towers=[], enemies=[], projectiles=[];
+let money=150, kills=0, health=100, wave=1;
+let waveActive=false, selectedTowerType="cannon";
+
+const towerStats={
+cannon:{cost:30,range:160,fireRate:50,damage:20,color:"#2e8b57"},
+sniper:{cost:50,range:260,fireRate:90,damage:55,color:"#6a0dad"},
+rapid:{cost:40,range:120,fireRate:15,damage:10,color:"#ff8c00"}
+};
+
+class Tower{
+constructor(x,y,type){
+const s=towerStats[type];
+this.x=x; this.y=y; this.type=type;
+this.range=s.range; this.fireRate=s.fireRate;
+this.damage=s.damage; this.color=s.color;
+this.cooldown=0; this.angle=0;
+}
+update(){
+if(this.cooldown>0) this.cooldown--;
+let target=enemies.find(e=>{
+let dx=e.x-this.x, dy=e.y-this.y;
+return !e.dead && Math.sqrt(dx*dx+dy*dy)<=this.range;
+});
+if(target){
+let dx=target.x-this.x;
+let dy=target.y-this.y;
+this.angle=Math.atan2(dy,dx);
+if(this.cooldown<=0){
+projectiles.push(new Projectile(this.x,this.y,target,this.damage));
+this.cooldown=this.fireRate;
+}
+}
+}
+draw(){
+ctx.fillStyle=this.color;
+ctx.fillRect(this.x-20,this.y-20,40,40);
+
+ctx.save();
+ctx.translate(this.x,this.y);
+ctx.rotate(this.angle);
+ctx.fillStyle="black";
+ctx.fillRect(0,-4,30,8);
+ctx.restore();
+}
+}
+
+class Projectile{
+constructor(x,y,target,damage){
+this.x=x; this.y=y; this.target=target;
+this.speed=6; this.damage=damage; this.active=true;
+}
+update(){
+if(!this.target||this.target.dead){this.active=false;return;}
+let dx=this.target.x-this.x;
+let dy=this.target.y-this.y;
+let d=Math.sqrt(dx*dx+dy*dy);
+if(d<6){
+this.target.health-=this.damage;
+if(this.target.health<=0&&!this.target.dead){
+this.target.dead=true; money+=20; kills++;
+}
+this.active=false; return;
+}
+this.x+=dx/d*this.speed;
+this.y+=dy/d*this.speed;
+}
+draw(){
+ctx.fillStyle="black";
+ctx.beginPath();
+ctx.arc(this.x,this.y,4,0,Math.PI*2);
+ctx.fill();
+}
+}
+
+class Enemy{
+constructor(type){
+this.type=type;
+this.x=0; this.y=PATH_Y+10;
+this.dead=false;
+
+if(type==="fast"){
+this.health=25+wave*5; this.speed=2.5+wave*0.2; this.color="blue";
+}
+else if(type==="tank"){
+this.health=120+wave*20; this.speed=0.8+wave*0.1; this.color="green";
+}
+else{
+this.health=60+wave*10; this.speed=1.5+wave*0.15; this.color="red";
+}
+
+this.maxHealth=this.health;
+}
+update(){
+this.x+=this.speed;
+if(this.x>canvas.width){ this.dead=true; health-=10; }
+}
+draw(){
+ctx.fillStyle=this.color;
+ctx.fillRect(this.x,this.y,30,30);
+ctx.fillStyle="lime";
+ctx.fillRect(this.x,this.y-6,(this.health/this.maxHealth)*30,4);
+}
+}
+
+function spawnWave(){
+waveActive=true;
+document.getElementById("startWaveBtn").disabled=true;
+for(let i=0;i<wave*5;i++){
+setTimeout(()=>{
+let rand=Math.random();
+let type=rand<0.6?"normal":rand<0.85?"fast":"tank";
+enemies.push(new Enemy(type));
+},i*400);
+}
+}
+
+function update(){
+towers.forEach(t=>t.update());
+enemies.forEach(e=>!e.dead&&e.update());
+projectiles.forEach(p=>p.update());
+
+enemies=enemies.filter(e=>!e.dead);
+projectiles=projectiles.filter(p=>p.active);
+
+if(waveActive&&enemies.length===0){
+waveActive=false; wave++; money+=60;
+document.getElementById("startWaveBtn").disabled=false;
+if(document.getElementById("autoWave").checked){
+setTimeout(spawnWave,1500);
+}
+}
+}
+
+function drawGrid(){
+ctx.strokeStyle="#ddd";
+for(let x=0;x<canvas.width;x+=GRID_SIZE){
+for(let y=0;y<canvas.height;y+=GRID_SIZE){
+ctx.strokeRect(x,y,GRID_SIZE,GRID_SIZE);
+}
+}
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+drawGrid();
+
+ctx.fillStyle="#bbb";
+ctx.fillRect(0,PATH_Y,canvas.width,PATH_HEIGHT);
+
+towers.forEach(t=>t.draw());
+projectiles.forEach(p=>p.draw());
+enemies.forEach(e=>e.draw());
+
+document.getElementById("health").innerText=health;
+document.getElementById("money").innerText=money;
+document.getElementById("kills").innerText=kills;
+document.getElementById("wave").innerText=wave;
+
+if(health<=0){
+ctx.fillStyle="black";
+ctx.font="40px Arial";
+ctx.fillText("GAME OVER",canvas.width/2-130,canvas.height/2);
+return;
+}
+requestAnimationFrame(gameLoop);
+}
+
+function gameLoop(){ update(); draw(); }
+
+canvas.addEventListener("click",e=>{
+let rect=canvas.getBoundingClientRect();
+let gx=Math.floor((e.clientX-rect.left)/GRID_SIZE)*GRID_SIZE+GRID_SIZE/2;
+let gy=Math.floor((e.clientY-rect.top)/GRID_SIZE)*GRID_SIZE+GRID_SIZE/2;
+if(gy>PATH_Y&&gy<PATH_Y+PATH_HEIGHT) return;
+let cost=towerStats[selectedTowerType].cost;
+if(money>=cost){
+towers.push(new Tower(gx,gy,selectedTowerType));
+money-=cost;
+}
+});
+
+document.querySelectorAll(".towerBtn").forEach(btn=>{
+btn.addEventListener("click",()=>{
+document.querySelectorAll(".towerBtn").forEach(b=>b.classList.remove("selected"));
+btn.classList.add("selected");
+selectedTowerType=btn.dataset.type;
+});
+});
+
+document.getElementById("startWaveBtn").addEventListener("click",()=>{
+if(!waveActive) spawnWave();
+});
+
+document.getElementById("restartBtn").addEventListener("click",()=>{
+towers=[]; enemies=[]; projectiles=[];
+money=150; kills=0; health=100; wave=1;
+waveActive=false;
+document.getElementById("startWaveBtn").disabled=false;
+});
+
+gameLoop();
+</script>
+</body>
+</html>
