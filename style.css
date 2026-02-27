@@ -1,0 +1,22 @@
+body {
+            font-family: Arial;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background: #f8f8f8;
+        }
+
+        #ui {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-right: 5px;
+            padding: 8px;
+        }
+
+        .selected {
+            background: #4CAF50;
+            color: white;
+        }
