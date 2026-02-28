@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <title>Tower Defense</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <h2>Tower Defense</h2>
+    <h2>🏰 Tower Defense</h2>
 
     <canvas id="gameCanvas" width="900" height="500"></canvas>
 
     <div id="ui">
-        <p>
-            Health: <span id="health">100</span> |
-            Money: <span id="money">150</span> |
-            Kills: <span id="kills">0</span> |
-            Wave: <span id="wave">1</span>
-        </p>
+        <div id="stats">
+            ❤️ <span id="health">100</span> &nbsp;|&nbsp;
+            💰 <span id="money">150</span> &nbsp;|&nbsp;
+            ☠️ <span id="kills">0</span> &nbsp;|&nbsp;
+            🌊 Wave <span id="wave">1</span> / 20
+        </div>
 
-        <button id="startWaveBtn">Start Wave</button>
-        <button id="restartBtn">Restart</button>
-        <label>
-            <input type="checkbox" id="autoWave">
-            Auto Wave
-        </label>
+        <div id="controls">
+            <button id="startWaveBtn">▶ Start Wave</button>
+            <button id="restartBtn">↺ Restart</button>
+            <label><input type="checkbox" id="autoWave"> Auto Wave</label>
+        </div>
 
-        <br><br>
+        <div id="towerRow">
+            <span class="label">Place:</span>
+            <button class="towerBtn selected" data-type="cannon">🟩 Cannon ($30)</button>
+            <button class="towerBtn" data-type="sniper">🟣 Sniper ($50)</button>
+            <button class="towerBtn" data-type="rapid">🟠 Rapid ($40)</button>
+            <button class="towerBtn" data-type="freeze">🔵 Freeze ($45)</button>
+        </div>
 
-        <b>Select Tower:</b>
-        <button class="towerBtn selected" data-type="cannon">Cannon ($30)</button>
-        <button class="towerBtn" data-type="sniper">Sniper ($50)</button>
-        <button class="towerBtn" data-type="rapid">Rapid ($40)</button>
+        <div id="upgradePanel" style="display:none;">
+            <div id="upgradeTowerName">Tower</div>
+            <div id="upgradeTowerStats"></div>
+            <button id="upgradeTowerBtn">Upgrade</button>
+        </div>
     </div>
 
     <script src="game.js"></script>
 </body>
-</html>>
+</html>
