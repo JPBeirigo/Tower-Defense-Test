@@ -1,45 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Tower Defense</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tower Defense</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h2>🏰 Tower Defense</h2>
+  <div class="game-wrapper">
+    <div class="game-window">
 
-    <canvas id="gameCanvas" width="900" height="500"></canvas>
-
-    <div id="ui">
-        <div id="stats">
-            ❤️ <span id="health">100</span> &nbsp;|&nbsp;
-            💰 <span id="money">150</span> &nbsp;|&nbsp;
-            ☠️ <span id="kills">0</span> &nbsp;|&nbsp;
-            🌊 Wave <span id="wave">1</span> / 20
+      <!-- ── STATS BAR ── -->
+      <div class="stats-bar">
+        <div class="stat-group">
+          <div class="stat">
+            <span class="stat-icon">❤️</span>
+            <span class="stat-label">HP</span>
+            <span id="stat-health" class="stat-val">100</span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">💰</span>
+            <span class="stat-label">GOLD</span>
+            <span id="stat-money" class="stat-val">100</span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">☠️</span>
+            <span class="stat-label">KILLS</span>
+            <span id="stat-kills" class="stat-val">0</span>
+          </div>
         </div>
 
-        <div id="controls">
-            <button id="startWaveBtn">▶ Start Wave</button>
-            <button id="restartBtn">↺ Restart</button>
-            <label><input type="checkbox" id="autoWave"> Auto Wave</label>
+        <div class="title-group">TOWER DEFENSE</div>
+
+        <div class="stat-group stat-group--right">
+          <div class="stat">
+            <span class="stat-label">WAVE</span>
+            <span id="stat-wave" class="stat-val">1</span>
+            <span class="stat-max">/ 20</span>
+          </div>
+          <button id="startWaveBtn" class="btn btn--start">▶ START</button>
+          <label class="auto-label">
+            <input type="checkbox" id="autoWave"> AUTO
+          </label>
+          <button id="pauseBtn" class="btn btn--pause" title="Pause (ESC)">⏸</button>
+          <button class="btn btn--restart restartTrigger" title="Restart">↺</button>
+        </div>
+      </div>
+
+      <!-- ── CANVAS CONTAINER ── -->
+      <div class="canvas-container">
+        <canvas id="gameCanvas" width="900" height="460"></canvas>
+
+        <!-- PAUSE OVERLAY -->
+        <div id="pauseOverlay" class="pause-overlay">
+          <div class="pause-card">
+            <div class="pause-title">PAUSED</div>
+            <div class="pause-hint">Press <kbd>ESC</kbd> or click ⏸ to resume</div>
+            <div class="pause-actions">
+              <button class="btn btn--resume" onclick="document.getElementById('pauseBtn').click()">▶ Resume</button>
+              <button class="btn btn--restart-lg restartTrigger">↺ Restart</button>
+            </div>
+          </div>
         </div>
 
-        <div id="towerRow">
-            <span class="label">Place:</span>
-            <button class="towerBtn selected" data-type="cannon">🟩 Cannon ($30)</button>
-            <button class="towerBtn" data-type="sniper">🟣 Sniper ($50)</button>
-            <button class="towerBtn" data-type="rapid">🟠 Rapid ($40)</button>
-            <button class="towerBtn" data-type="freeze">🔵 Freeze ($45)</button>
-        </div>
+        <!-- TOWER SIDEBAR (slides in from right when a tower is selected) -->
+        <div id="towerSidebar" class="tower-sidebar">
+          <button class="sb-close" id="sbCloseBtn" title="Deselect">✕</button>
 
-        <div id="upgradePanel" style="display:none;">
-            <div id="upgradeTowerName">Tower</div>
-            <div id="upgradeTowerStats"></div>
-            <button id="upgradeTowerBtn">Upgrade</button>
-        </div>
-    </div>
+          <div class="sb-header">
+            <div id="sb-name" class="sb-name">Tower</div>
+            <div id="sb-level" class="sb-level">Level 1</div>
+          </div>
 
-    <script src="game.js"></script>
+          <div class="sb-divider"></div>
+
+          <div class="sb-stats">
+            <div class="sb-stat">
+              <span class="sb-stat-label">RANGE</span>
+              <span id="sb-range" class="sb-stat-val">—</span>
+            </div>
+            <div class="sb-stat">
+              <span class="sb-stat-label">DAMAGE</span>
+              <span id="sb-dmg" class="sb-stat-val">—</span>
+            </div>
+            <div class="sb-stat">
+              <span class="sb-stat-label">FIRE RATE</span>
+              <span id="sb-rate" class="sb-stat-val">—</span>
+            </div>
+          </div>
+
+          <div class="sb-divider"></div>
+
+          <div class="sb-actions">
+            <button id="upBtn" class="btn btn--upgrade-sb">⬆ Upgrade</button>
+            <button id="sellBtn" class="btn btn--sell-sb">Sell</button>
+          </div>
+
+          <div class="sb-hint">Click elsewhere to deselect</div>
+        </div>
+      </div>
+
+      <!-- ── HUD (tower selection row) ── -->
+      <div class="hud">
+        <div class="hud-section hud-towers">
+          <span class="hud-label">PLACE TOWER</span>
+          <div class="tower-row">
+            <button class="towerBtn selected" data-type="cannon">
+              <span class="tb-icon">💣</span>
+              <span class="tb-name">Cannon</span>
+              <span class="tb-cost">$40</span>
+              <span class="tb-tip">Splash · Mid range</span>
+            </button>
+            <button class="towerBtn" data-type="sniper">
+              <span class="tb-icon">🎯</span>
+              <span class="tb-name">Sniper</span>
+              <span class="tb-cost">$65</span>
+              <span class="tb-tip">High dmg · Long range</span>
+            </button>
+            <button class="towerBtn" data-type="rapid">
+              <span class="tb-icon">⚡</span>
+              <span class="tb-name">Rapid</span>
+              <span class="tb-cost">$50</span>
+              <span class="tb-tip">Fast fire · Short range</span>
+            </button>
+            <button class="towerBtn" data-type="freeze">
+              <span class="tb-icon">❄️</span>
+              <span class="tb-name">Freeze</span>
+              <span class="tb-cost">$60</span>
+              <span class="tb-tip">AOE slow · Lv3 vs Elite</span>
+            </button>
+            <button class="towerBtn" data-type="fire">
+              <span class="tb-icon">🔥</span>
+              <span class="tb-name">Fire</span>
+              <span class="tb-cost">$70</span>
+              <span class="tb-tip">Damage over time</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /game-window -->
+  </div><!-- /game-wrapper -->
+
+  <script src="game.js"></script>
+  <script>
+    document.getElementById("sbCloseBtn").addEventListener("click", () => {
+      window.selectedTower = null;
+      if (typeof updatePanel === "function") updatePanel();
+    });
+  </script>
 </body>
 </html>
