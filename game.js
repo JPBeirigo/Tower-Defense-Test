@@ -824,8 +824,6 @@ function doRestart() {
   document.getElementById("pauseBtn").title="Pause (ESC)";
   document.getElementById("startWaveBtn").disabled=false;
   selectedTower=null; updatePanel();
-  stopMusic();
-  if (AC && AC.state==="running") startMusic();
   gameLoop();
 }
 
