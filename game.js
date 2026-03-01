@@ -14,7 +14,20 @@ const GRASS_COLOR = "#5c8c3a";
 const AC = (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; } })();
 let audioEnabled = true;
 
-function resumeAudio() { if (AC && AC.state === "suspended") AC.resume(); }
+let _rapidBuf = null;
+function getRapidBuf() {
+  if (_rapidBuf) return _rapidBuf;
+  const len = Math.ceil(AC.sampleRate * 0.03);
+  _rapidBuf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = _rapidBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return _rapidBuf;
+}
+
+function resumeAudio() {
+  if (AC && AC.state === "suspended") AC.resume().then(startMusic);
+  else startMusic();
+}
 document.addEventListener("click",      resumeAudio, { once: true });
 document.addEventListener("keydown",    resumeAudio, { once: true });
 document.addEventListener("touchstart", resumeAudio, { once: true });
@@ -49,15 +62,32 @@ function playSound(type) {
   };
 
   switch (type) {
-    case "cannon":      shape(90,"sawtooth",0.18,0.8,30); noise(0.18,0.6,80,600); break;
-    case "sniper":      shape(600,"sawtooth",0.06,0.5,80); noise(0.05,0.4,800,4000); break;
-    case "rapid":       shape(320,"square",0.05,0.35,120); noise(0.04,0.25,400,2000); break;
-    case "freeze":      shape(1200,"sine",0.12,0.4,600); shape(1800,"sine",0.10,0.25,900); shape(900,"sine",0.14,0.2,450); break;
-    case "fire":        noise(0.15,0.35,200,1000); shape(150,"sawtooth",0.12,0.2,80); break;
-    case "tesla":       shape(800,"sawtooth",0.08,0.5,1600); shape(400,"square",0.1,0.3,200); noise(0.08,0.3,600,4000); break;
-    case "mortar":      shape(60,"sawtooth",0.28,0.9,20); noise(0.28,0.7,40,500); shape(180,"sawtooth",0.22,0.6,50); break;
-    case "kill":        shape(300,"sine",0.08,0.25,80); break;
-    case "bossKill":    shape(60,"sawtooth",0.45,0.9,25); noise(0.45,0.7,50,400); shape(120,"sawtooth",0.3,0.5,40); break;
+    case "cannon":  shape(90,"sawtooth",0.18,0.8,30); noise(0.18,0.6,80,600); break;
+    case "sniper":  shape(600,"sawtooth",0.06,0.5,80); noise(0.05,0.4,800,4000); break;
+    case "rapid": {
+      const hp = AC.createBiquadFilter(), src = AC.createBufferSource(), ng = AC.createGain();
+      hp.type = "highpass"; hp.frequency.value = 2800;
+      src.buffer = getRapidBuf();
+      src.connect(hp); hp.connect(ng); ng.connect(master);
+      ng.gain.setValueAtTime(0.6, now);
+      ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
+      src.start(now); src.stop(now + 0.025);
+
+      const osc = AC.createOscillator(), og = AC.createGain();
+      osc.type = "square"; osc.frequency.value = 1100;
+      osc.connect(og); og.connect(master);
+      og.gain.setValueAtTime(0.2, now);
+      og.gain.exponentialRampToValueAtTime(0.0001, now + 0.016);
+      osc.start(now); osc.stop(now + 0.018);
+      break;
+    }
+
+    case "freeze": shape(1200,"sine",0.12,0.4,600); shape(1800,"sine",0.10,0.25,900); shape(900,"sine",0.14,0.2,450); break;
+    case "fire":   noise(0.15,0.35,200,1000); shape(150,"sawtooth",0.12,0.2,80); break;
+    case "tesla":  shape(800,"sawtooth",0.08,0.5,1600); shape(400,"square",0.1,0.3,200); noise(0.08,0.3,600,4000); break;
+    case "mortar": shape(60,"sawtooth",0.28,0.9,20); noise(0.28,0.7,40,500); shape(180,"sawtooth",0.22,0.6,50); break;
+    case "kill":   shape(300,"sine",0.08,0.25,80); break;
+    case "bossKill": shape(60,"sawtooth",0.45,0.9,25); noise(0.45,0.7,50,400); shape(120,"sawtooth",0.3,0.5,40); break;
     case "finalBossKill": shape(40,"sawtooth",0.7,1.0,15); noise(0.7,0.9,30,300); shape(80,"sawtooth",0.5,0.7,30); shape(160,"sine",0.6,0.4,50); noise(0.5,0.6,200,800); break;
     case "wave":
       [0,0.12,0.24].forEach((dt,i) => {
@@ -228,6 +258,7 @@ function togglePause() {
   const btn=document.getElementById("pauseBtn");
   btn.textContent=isPaused?"▶":"⏸";
   btn.title=isPaused?"Resume (ESC)":"Pause (ESC)";
+  setMusicVol(isPaused ? 0.04 : 0.15);
   if (!isPaused&&!loopId) gameLoop();
 }
 document.addEventListener("keydown", e => { if (e.key==="Escape") togglePause(); });
@@ -282,7 +313,7 @@ class Tower {
       if (this.cooldown<=0) {
         projectiles.push(new Projectile(this.x,this.y,target,this.damage,this.type,this.level));
         this.cooldown=this.fireRate;
-        if (this.type==="rapid") { if (Math.random()<0.18) playSound("rapid"); }
+        if (this.type==="rapid") { if (Math.random()<0.6) playSound("rapid"); }
         else if (this.type==="tesla") playSound("tesla");
         else if (this.type==="mortar") playSound("mortar");
         else playSound(this.type==="cannon"?"cannon":this.type==="sniper"?"sniper":
@@ -792,7 +823,10 @@ function doRestart() {
   document.getElementById("pauseBtn").textContent="⏸";
   document.getElementById("pauseBtn").title="Pause (ESC)";
   document.getElementById("startWaveBtn").disabled=false;
-  selectedTower=null; updatePanel(); gameLoop();
+  selectedTower=null; updatePanel();
+  stopMusic();
+  if (AC && AC.state==="running") startMusic();
+  gameLoop();
 }
 
 // ═══════════════════════════════════════════════════

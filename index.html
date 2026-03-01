@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tower Defense</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%230f1118'/%3E%3Crect x='10' y='21' width='12' height='7' rx='1' fill='%232e8b57'/%3E%3Crect x='12' y='10' width='8' height='13' fill='%232e8b57'/%3E%3Crect x='11' y='7' width='3' height='5' rx='1' fill='%2345c070'/%3E%3Crect x='15' y='7' width='2' height='4' fill='%230f1118'/%3E%3Crect x='18' y='7' width='3' height='5' rx='1' fill='%2345c070'/%3E%3Crect x='20' y='15' width='8' height='3' rx='1' fill='%23999'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -159,27 +160,14 @@
 
   <script src="game.js"></script>
   <script>
-    // ── Close sidebar button ──
     document.getElementById("sbCloseBtn").addEventListener("click", () => {
       selectedTower = null;
       if (typeof updatePanel === "function") updatePanel();
     });
 
-    // ── Responsive scaling ──
-    function scaleGame() {
-      const gw   = document.getElementById("gameWindow");
-      const avail = Math.min(window.innerWidth, window.innerHeight < 600 ? window.innerWidth : window.innerWidth);
-      const scale = Math.min(1, avail / 916); 
-      gw.style.transform       = scale < 1 ? `scale(${scale})` : "";
-      gw.style.transformOrigin = "top center";
-      // Adjust wrapper height so scaled element doesn't overlap page footer
-      document.querySelector(".game-wrapper").style.minHeight =
-        scale < 1 ? `${gw.offsetHeight * scale}px` : "";
-    }
-    window.addEventListener("resize", scaleGame);
-    // Wait for fonts/layout to settle before first scale
-    window.addEventListener("load", scaleGame);
-    scaleGame();
+    window.addEventListener("load", () => {
+      if (typeof AC !== "undefined" && AC && AC.state === "running") startMusic();
+    });
   </script>
 </body>
 </html>
