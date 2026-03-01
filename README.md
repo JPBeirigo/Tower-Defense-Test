@@ -13,4 +13,4 @@ Esse jogo de Tower Defense foi feito para mostrar diferentes tipos de mecânicas
 - Prévia de alcance de torres antes de serem posicionadas
 
 # Deploy
-Caso queira jogar o jogo e testar por si só, você pode jogar ele [aqui!]([https://your-deployment-link.com](https://jpbeirigo.github.io/Tower-Defense-Test/)).
+Caso queira jogar o jogo e testar por si só, você pode jogar ele [aqui!](https://jpbeirigo.github.io/Tower-Defense-Test/)
