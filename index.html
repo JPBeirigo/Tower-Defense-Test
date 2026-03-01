@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tower Defense</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 <body>
 
   <div class="game-wrapper">
-    <div class="game-window">
+    <div class="game-window" id="gameWindow">
 
       <!-- ── STATS BAR ── -->
       <div class="stats-bar">
@@ -24,7 +24,7 @@
           <div class="stat">
             <span class="stat-icon">💰</span>
             <span class="stat-label">GOLD</span>
-            <span id="stat-money" class="stat-val">100</span>
+            <span id="stat-money" class="stat-val">150</span>
           </div>
           <div class="stat">
             <span class="stat-icon">☠️</span>
@@ -58,7 +58,7 @@
         <div id="pauseOverlay" class="pause-overlay">
           <div class="pause-card">
             <div class="pause-title">PAUSED</div>
-            <div class="pause-hint">Press <kbd>ESC</kbd> or click ⏸ to resume</div>
+            <div class="pause-hint">Press <kbd>ESC</kbd> or tap ⏸ to resume</div>
             <div class="pause-actions">
               <button class="btn btn--resume" onclick="document.getElementById('pauseBtn').click()">▶ Resume</button>
               <button class="btn btn--restart-lg restartTrigger">↺ Restart</button>
@@ -66,7 +66,7 @@
           </div>
         </div>
 
-        <!-- TOWER SIDEBAR (slides in from right when a tower is selected) -->
+        <!-- TOWER SIDEBAR -->
         <div id="towerSidebar" class="tower-sidebar">
           <button class="sb-close" id="sbCloseBtn" title="Deselect">✕</button>
 
@@ -99,11 +99,11 @@
             <button id="sellBtn" class="btn btn--sell-sb">Sell</button>
           </div>
 
-          <div class="sb-hint">Click elsewhere to deselect</div>
+          <div class="sb-hint">Tap elsewhere to deselect</div>
         </div>
       </div>
 
-      <!-- ── HUD (tower selection row) ── -->
+      <!-- ── HUD ── -->
       <div class="hud">
         <div class="hud-section hud-towers">
           <span class="hud-label">PLACE TOWER</span>
@@ -111,32 +111,44 @@
             <button class="towerBtn selected" data-type="cannon">
               <span class="tb-icon">💣</span>
               <span class="tb-name">Cannon</span>
-              <span class="tb-cost">$40</span>
+              <span class="tb-cost">$50</span>
               <span class="tb-tip">Splash · Mid range</span>
             </button>
             <button class="towerBtn" data-type="sniper">
               <span class="tb-icon">🎯</span>
               <span class="tb-name">Sniper</span>
-              <span class="tb-cost">$65</span>
+              <span class="tb-cost">$70</span>
               <span class="tb-tip">High dmg · Long range</span>
             </button>
             <button class="towerBtn" data-type="rapid">
               <span class="tb-icon">⚡</span>
               <span class="tb-name">Rapid</span>
-              <span class="tb-cost">$50</span>
+              <span class="tb-cost">$45</span>
               <span class="tb-tip">Fast fire · Short range</span>
             </button>
             <button class="towerBtn" data-type="freeze">
               <span class="tb-icon">❄️</span>
               <span class="tb-name">Freeze</span>
-              <span class="tb-cost">$60</span>
+              <span class="tb-cost">$85</span>
               <span class="tb-tip">AOE slow · Lv3 vs Elite</span>
             </button>
             <button class="towerBtn" data-type="fire">
               <span class="tb-icon">🔥</span>
               <span class="tb-name">Fire</span>
-              <span class="tb-cost">$70</span>
+              <span class="tb-cost">$60</span>
               <span class="tb-tip">Damage over time</span>
+            </button>
+            <button class="towerBtn" data-type="tesla">
+              <span class="tb-icon">🔗</span>
+              <span class="tb-name">Tesla</span>
+              <span class="tb-cost">$180</span>
+              <span class="tb-tip">Chain ×2→4 · Fast fire</span>
+            </button>
+            <button class="towerBtn" data-type="mortar">
+              <span class="tb-icon">💥</span>
+              <span class="tb-name">Mortar</span>
+              <span class="tb-cost">$250</span>
+              <span class="tb-tip">Huge splash · Long arc</span>
             </button>
           </div>
         </div>
@@ -147,10 +159,27 @@
 
   <script src="game.js"></script>
   <script>
+    // ── Close sidebar button ──
     document.getElementById("sbCloseBtn").addEventListener("click", () => {
-      window.selectedTower = null;
+      selectedTower = null;
       if (typeof updatePanel === "function") updatePanel();
     });
+
+    // ── Responsive scaling ──
+    function scaleGame() {
+      const gw   = document.getElementById("gameWindow");
+      const avail = Math.min(window.innerWidth, window.innerHeight < 600 ? window.innerWidth : window.innerWidth);
+      const scale = Math.min(1, avail / 916); 
+      gw.style.transform       = scale < 1 ? `scale(${scale})` : "";
+      gw.style.transformOrigin = "top center";
+      // Adjust wrapper height so scaled element doesn't overlap page footer
+      document.querySelector(".game-wrapper").style.minHeight =
+        scale < 1 ? `${gw.offsetHeight * scale}px` : "";
+    }
+    window.addEventListener("resize", scaleGame);
+    // Wait for fonts/layout to settle before first scale
+    window.addEventListener("load", scaleGame);
+    scaleGame();
   </script>
 </body>
 </html>
