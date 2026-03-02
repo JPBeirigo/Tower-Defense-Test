@@ -421,8 +421,7 @@ class Projectile {
     } else if (this.type==="freeze") {
       for (const e of enemies) {
         if (e.dead||Math.hypot(e.cx-t.cx,e.cy-t.cy)>=FREEZE_AOE_R) continue;
-        const canSlow=e.immuneToSlow?this.towerLevel>=3:true;
-        if (canSlow) { e.frozen=160; e.frozenVisual=160; }
+        if (!e.immuneToSlow) { e.frozen=160; e.frozenVisual=160; }
         else if (e===t) addFloat("IMMUNE!",e.cx,e.cy-12,"#ffd700");
       }
       spawnFreezeBurst(t.cx,t.cy); spawnRing(t.cx,t.cy,"rgba(100,220,255,0.7)",FREEZE_AOE_R);
@@ -500,7 +499,7 @@ class Enemy {
     this.immuneToSlow=false;
     switch(type) {
       case "finalBoss": this.health=8000;this.speed=0.55;this.color="#110022";this.size=78;this.reward=300;this.immuneToSlow=true; break;
-      case "boss":      this.health=600; this.speed=0.8; this.color="#1a1a2e";this.size=58;this.reward=70;  break;
+      case "boss":      this.health=600; this.speed=0.8; this.color="#1a1a2e";this.size=58;this.reward=70; this.immuneToSlow=true; break;
       case "elite":     this.health=2200;this.speed=0.95;this.color="#3a0010";this.size=66;this.reward=140; this.immuneToSlow=true; break;
       case "fast":      this.health=35;  this.speed=2.8; this.color="#3a7ad4";this.size=26;this.reward=10;  break;
       case "tank":      this.health=180; this.speed=0.85;this.color="#3a8a3a";this.size=36;this.reward=22;  break;
@@ -553,12 +552,6 @@ class Enemy {
     if (this.type==="finalBoss") {
       ctx.strokeStyle=`rgba(255,0,180,${0.6+0.4*Math.sin(T/120)})`; ctx.lineWidth=3;
       ctx.strokeRect(this.x+2,this.y+2,this.size-4,this.size-4); ctx.lineWidth=1;
-      ctx.fillStyle=`rgba(255,100,200,${0.7+0.3*Math.sin(T/80)})`;
-      ctx.beginPath(); ctx.arc(this.x+this.size*0.3,this.y+this.size*0.35,7,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(this.x+this.size*0.7,this.y+this.size*0.35,7,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#000";
-      ctx.beginPath(); ctx.arc(this.x+this.size*0.3,this.y+this.size*0.35,3.5,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(this.x+this.size*0.7,this.y+this.size*0.35,3.5,0,Math.PI*2); ctx.fill();
     }
 
     const bw=this.size+4, ratio=Math.max(0,this.health/this.maxHealth);
